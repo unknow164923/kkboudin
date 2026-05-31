@@ -12,12 +12,12 @@ const client = new Client({
 
 // ─── CONFIG — À remplir ─────────────────────────────────────────────────────
 const CONFIG = {
-  TOKEN: 'TON_TOKEN_BOT_ICI',
-  GUILD_ID: 'TON_GUILD_ID',
-  TICKET_CATEGORY_ID: 'ID_CATEGORIE_TICKETS',       // Catégorie où Ticket Tool crée les tickets
-  FICHE_CATEGORY_ID:  'ID_CATEGORIE_FICHE_CLIENT',   // Catégorie "fiche client" déjà créée
-  OWNER_ID:           'TON_USER_ID',                 // Ton ID Discord
-  OPEN_TICKET_CHANNEL_ID: 'ID_SALON_OUVRIR_TICKET',  // Salon avec le bouton "Ouvrir un ticket"
+  TOKEN: 'MTUxMDY2Njc4MTkwMTk3OTY2OA.GkCyMF.F1bFfi-aPy-TFMWCg3fw3q7wZPSw7xipTfTXnc',
+  GUILD_ID: '1508161088351375510',
+  TICKET_CATEGORY_ID: '1508169357472039044',       // Catégorie où Ticket Tool crée les tickets
+  FICHE_CATEGORY_ID:  '1509061881657298976',   // Catégorie "fiche client" déjà créée
+  OWNER_ID:           '1086646991976677486',                 // Ton ID Discord
+  OPEN_TICKET_CHANNEL_ID: '1508163572696485938',  // Salon avec le bouton "Ouvrir un ticket"
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
