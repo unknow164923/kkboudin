@@ -12,7 +12,7 @@ const client = new Client({
 
 // ─── CONFIG — À remplir ─────────────────────────────────────────────────────
 const CONFIG = {
-  TOKEN: 'MTUxMDY2Njc4MTkwMTk3OTY2OA.GkCyMF.F1bFfi-aPy-TFMWCg3fw3q7wZPSw7xipTfTXnc',
+  TOKEN: 'MTUxMDY2Njc4MTkwMTk3OTY2OA.GtGh-M.X6jjY1vKLNddOcJpYEYJ0wgncgTNW0qs-zl7rM',
   GUILD_ID: '1508161088351375510',
   TICKET_CATEGORY_ID: '1508169357472039044',       // Catégorie où Ticket Tool crée les tickets
   FICHE_CATEGORY_ID:  '1509061881657298976',   // Catégorie "fiche client" déjà créée
