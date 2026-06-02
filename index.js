@@ -20,6 +20,7 @@ const CONFIG = {
   TICKET_CATEGORY_ID:     process.env.TICKET_CATEGORY_ID     || 'ID_CATEGORIE_TICKETS',
   FICHE_CATEGORY_ID:      process.env.FICHE_CATEGORY_ID      || 'ID_CATEGORIE_FICHE_CLIENT',
   OWNER_ID:               process.env.OWNER_ID               || 'TON_USER_ID',
+  COMMANDES_ID:           process.env.COMMANDES_ID            || 'ID_SALON_COMMANDES_EN_COURS',
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ client.once('ready', () => {
   console.log(`  TICKET_CATEGORY_ID : ${CONFIG.TICKET_CATEGORY_ID}`);
   console.log(`  FICHE_CATEGORY_ID  : ${CONFIG.FICHE_CATEGORY_ID}`);
   console.log(`  OWNER_ID           : ${CONFIG.OWNER_ID}`);
+  console.log(`  COMMANDES_ID       : ${CONFIG.COMMANDES_ID}`);
   client.user.setActivity('Vente de serveurs Discord', { type: 3 });
 });
 
@@ -63,7 +65,7 @@ client.on('channelCreate', async (channel) => {
     username: member?.user?.username || 'Inconnu',
     tag:      member?.user?.tag      || 'Inconnu',
     ticketChannelId: channel.id,
-    pack: null, paiement: null,
+    pack: null, paiement: null, paiementConfirme: false,
     nomServeur: '', theme: '', couleurs: '', reseaux: '',
     nbBots: 0,        bots: [],
     nbCategories: 0,  categories: [],
@@ -118,6 +120,24 @@ async function envoyerSelectPaiement(channel) {
       .setStyle(ButtonStyle.Primary)
   );
   await channel.send({ embeds: [embed], components: [row] });
+}
+
+// Version appelée depuis le DM owner (pas d'interaction disponible — on envoie un bouton)
+async function ouvrirModalInfosGeneralesByChannel(channel, data) {
+  // On ne peut pas showModal sans interaction — on envoie un bouton pour que le client clique
+  await channel.send({
+    embeds: [new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle('📋 Étape suivante — Infos générales')
+      .setDescription('> Clique sur le bouton ci-dessous pour renseigner les infos de ton serveur.')
+    ],
+    components: [new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('btn:infos')
+        .setLabel('📋 Renseigner les infos de mon serveur')
+        .setStyle(ButtonStyle.Primary)
+    )]
+  });
 }
 
 async function ouvrirModalInfosGenerales(interaction) {
@@ -304,20 +324,6 @@ async function ouvrirModalFinal(interaction) {
         .setStyle(TextInputStyle.Paragraph)
         .setPlaceholder('Ambiance, inspirations, fonctionnalités, public cible, ce que tu veux avoir ou éviter...')
         .setRequired(true).setMaxLength(1000)
-    ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('budget')
-        .setLabel('Budget / remarque sur le paiement')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('ex: 15€ comme le pack Pro, je paie via PayPal...')
-        .setRequired(false).setMaxLength(200)
-    ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('delai')
-        .setLabel('Délai souhaité pour la livraison')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('ex: Le plus vite possible, dans 3 jours...')
-        .setRequired(false).setMaxLength(100)
     )
   );
   await interaction.showModal(modal);
@@ -346,7 +352,81 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton() && interaction.customId === 'btn:paiement') {
       if (!data) return;
       data.paiement = 'Virement bancaire';
-      // showModal IS the interaction response — no update() before
+      await interaction.update({ components: [] });
+
+      // Envoyer un DM à l'owner
+      try {
+        const owner = await interaction.guild.members.fetch(CONFIG.OWNER_ID);
+        const dmEmbed = new EmbedBuilder()
+          .setColor(0xFEE75C)
+          .setTitle('💰 Nouveau paiement à vérifier !')
+          .setDescription(
+            `Le client **${data.username}** vient de confirmer son paiement par virement bancaire.\n\n` +
+            `📦 **Pack :** ${data.pack.toUpperCase()}\n` +
+            `🎫 **Ticket :** <#${data.ticketChannelId}>\n\n` +
+            `> Clique sur **✅ Paiement reçu** une fois que tu as bien reçu le virement.`
+          );
+        const dmRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`btn:paiement_ok:${interaction.channelId}`)
+            .setLabel('✅ Paiement reçu — continuer')
+            .setStyle(ButtonStyle.Success)
+        );
+        await owner.send({ embeds: [dmEmbed], components: [dmRow] });
+      } catch(e) {
+        console.error('Erreur envoi DM owner:', e);
+      }
+
+      // Message d'attente dans le ticket
+      await interaction.channel.send({
+        embeds: [new EmbedBuilder()
+          .setColor(0xFEE75C)
+          .setTitle('⏳ En attente de confirmation du paiement')
+          .setDescription(
+            '> Merci ! Nous avons été notifiés de ton virement.\n\n' +
+            '> Un administrateur va vérifier la réception du paiement et te donnera accès au formulaire de commande. ⚡'
+          )
+        ]
+      });
+      return;
+    }
+
+    // ── CONFIRMATION PAIEMENT REÇU (bouton dans le DM de l'owner) ────────────
+    if (interaction.isButton() && interaction.customId.startsWith('btn:paiement_ok:')) {
+      const ticketChannelId = interaction.customId.replace('btn:paiement_ok:', '');
+      // Chercher la commande dans toutes les commandes en cours
+      const targetData = commandes.get(ticketChannelId);
+
+      await interaction.update({ components: [] });
+      await interaction.followUp({ content: '✅ Paiement confirmé ! Le client peut maintenant remplir son formulaire.', flags: 64 });
+
+      if (!targetData) {
+        await interaction.followUp({ content: '⚠️ Commande introuvable (peut-être expirée).', flags: 64 });
+        return;
+      }
+
+      targetData.paiementConfirme = true;
+
+      // Notifier le client dans le ticket
+      const ticketChannel = interaction.guild?.channels.cache.get(ticketChannelId)
+        ?? await client.channels.fetch(ticketChannelId).catch(() => null);
+
+      if (ticketChannel) {
+        await ticketChannel.send({
+          embeds: [new EmbedBuilder()
+            .setColor(0x57F287)
+            .setTitle('✅ Paiement confirmé !')
+            .setDescription('> Ton paiement a bien été reçu ! Tu peux maintenant remplir ton formulaire de commande. 🎉')
+          ]
+        });
+        await ouvrirModalInfosGeneralesByChannel(ticketChannel, targetData);
+      }
+      return;
+    }
+
+    // ── BOUTON INFOS (après confirmation paiement) ──────────────────────────────
+    if (interaction.isButton() && interaction.customId === 'btn:infos') {
+      if (!data) return;
       await ouvrirModalInfosGenerales(interaction);
       return;
     }
@@ -537,8 +617,6 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isModalSubmit() && interaction.customId === 'modal:final') {
       if (!data) return;
       data.descriptionLibre = interaction.fields.getTextInputValue('description').trim();
-      data.budget           = interaction.fields.getTextInputValue('budget').trim();
-      data.delai            = interaction.fields.getTextInputValue('delai').trim();
       await interaction.reply({ content: '⏳ Ta fiche client est en cours de création...', flags: 64 });
       console.log(`📋 Création fiche pour ${data.username} | pack: ${data.pack}`);
       try {
@@ -653,8 +731,6 @@ async function creerFicheClient(guild, data) {
 
   fields.push(
     { name: '📝 Description complète', value: data.descriptionLibre || '*Non renseigné*' },
-    { name: '💰 Budget',               value: data.budget || '*Non renseigné*', inline: true },
-    { name: '⏱️ Délai souhaité',      value: data.delai  || '*Non renseigné*', inline: true },
     { name: '🎫 Ticket associé',       value: `<#${data.ticketChannelId}>`,     inline: true },
   );
 
@@ -674,6 +750,20 @@ async function creerFicheClient(guild, data) {
   );
 
   await ficheChannel.send({ embeds: [embed], components: [row] });
+
+  // Poster dans le salon "commandes en cours"
+  try {
+    const commandesChannel = await client.channels.fetch(CONFIG.COMMANDES_ID).catch(() => null);
+    if (commandesChannel) {
+      const packEmojisLocal = { basic: '🥉', pro: '🥈', premium: '🥇' };
+      const packPrixLocal   = { basic: '5€', pro: '15€', premium: '30€' };
+      await commandesChannel.send({
+        content: `${packEmojisLocal[data.pack]} **Nouvelle commande** — ${packPrixLocal[data.pack]} | 👤 **${data.username}** | 📋 Fiche : <#${ficheChannel.id}> | 🎫 Ticket : <#${data.ticketChannelId}>`
+      });
+    }
+  } catch(e) {
+    console.error('Erreur envoi commandes en cours:', e);
+  }
 
   // Résumé dans le ticket pour le client
   const tc = guild.channels.cache.get(data.ticketChannelId);
