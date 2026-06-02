@@ -345,7 +345,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton() && interaction.customId === 'btn:paiement') {
       if (!data) return;
       data.paiement = 'Virement bancaire';
-      await interaction.update({ components: [] });
+      // showModal IS the interaction response — no update() before
       await ouvrirModalInfosGenerales(interaction);
       return;
     }
