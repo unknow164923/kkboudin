@@ -33,6 +33,10 @@ function getData(channelId) {
 // ─── READY ────────────────────────────────────────────────────────────────────
 client.once('ready', () => {
   console.log(`✅ Bot connecté : ${client.user.tag}`);
+  console.log(`📋 CONFIG chargée :`);
+  console.log(`  TICKET_CATEGORY_ID : ${CONFIG.TICKET_CATEGORY_ID}`);
+  console.log(`  FICHE_CATEGORY_ID  : ${CONFIG.FICHE_CATEGORY_ID}`);
+  console.log(`  OWNER_ID           : ${CONFIG.OWNER_ID}`);
   client.user.setActivity('Vente de serveurs Discord', { type: 3 });
 });
 
@@ -357,7 +361,7 @@ client.on('interactionCreate', async (interaction) => {
       data.theme      = interaction.fields.getTextInputValue('theme').trim();
       data.couleurs   = interaction.fields.getTextInputValue('couleurs').trim();
       data.reseaux    = interaction.fields.getTextInputValue('reseaux').trim();
-      await interaction.reply({ content: '✅ Infos générales enregistrées !', ephemeral: true });
+      await interaction.reply({ content: '✅ Infos générales enregistrées !', flags: 64 });
 
       if (data.pack === 'basic') {
         await envoyerBoutonFinal(interaction.channel);
@@ -399,11 +403,13 @@ client.on('interactionCreate', async (interaction) => {
         nom:   interaction.fields.getTextInputValue('nom').trim(),
         usage: interaction.fields.getTextInputValue('usage').trim(),
       });
-      await interaction.reply({ content: `✅ Bot ${numero} enregistré !`, ephemeral: true });
+      await interaction.reply({ content: `✅ Bot ${numero} enregistré !`, flags: 64 });
+      console.log(`🤖 Bot ${numero}/${data.nbBots} enregistré. Pack: ${data.pack}`);
       if (numero < data.nbBots) {
         await envoyerBouton(interaction.channel, `btn:bot:${numero+1}:${data.nbBots}`, `🤖 Renseigner le bot ${numero+1} / ${data.nbBots}`);
       } else {
         await interaction.channel.send({ content: `✅ Tous les **${data.nbBots} bots** enregistrés !` });
+        console.log(`➡️ Passage aux catégories...`);
         await envoyerSelectNbCategories(interaction.channel);
       }
       return;
@@ -437,7 +443,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!data) return;
       const numero = parseInt(interaction.customId.split(':')[2]);
       data.categories.push(interaction.fields.getTextInputValue('nom').trim());
-      await interaction.reply({ content: `✅ Catégorie ${numero} enregistrée !`, ephemeral: true });
+      await interaction.reply({ content: `✅ Catégorie ${numero} enregistrée !`, flags: 64 });
       if (numero < data.nbCategories) {
         await envoyerBouton(interaction.channel, `btn:cat:${numero+1}:${data.nbCategories}`, `📂 Renseigner la catégorie ${numero+1} / ${data.nbCategories}`);
       } else {
@@ -475,7 +481,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!data) return;
       const numero = parseInt(interaction.customId.split(':')[2]);
       data.salons.push(interaction.fields.getTextInputValue('nom').trim());
-      await interaction.reply({ content: `✅ Salon ${numero} enregistré !`, ephemeral: true });
+      await interaction.reply({ content: `✅ Salon ${numero} enregistré !`, flags: 64 });
       if (numero < data.nbSalons) {
         await envoyerBouton(interaction.channel, `btn:salon:${numero+1}:${data.nbSalons}`, `💬 Renseigner le salon ${numero+1} / ${data.nbSalons}`);
       } else {
@@ -513,7 +519,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!data) return;
       const numero = parseInt(interaction.customId.split(':')[2]);
       data.roles.push(interaction.fields.getTextInputValue('nom').trim());
-      await interaction.reply({ content: `✅ Rôle ${numero} enregistré !`, ephemeral: true });
+      await interaction.reply({ content: `✅ Rôle ${numero} enregistré !`, flags: 64 });
       if (numero < data.nbRoles) {
         await envoyerBouton(interaction.channel, `btn:role:${numero+1}:${data.nbRoles}`, `🎭 Renseigner le rôle ${numero+1} / ${data.nbRoles}`);
       } else {
@@ -536,8 +542,14 @@ client.on('interactionCreate', async (interaction) => {
       data.descriptionLibre = interaction.fields.getTextInputValue('description').trim();
       data.budget           = interaction.fields.getTextInputValue('budget').trim();
       data.delai            = interaction.fields.getTextInputValue('delai').trim();
-      await interaction.reply({ content: '⏳ Ta fiche client est en cours de création...', ephemeral: true });
-      await creerFicheClient(interaction.guild, data);
+      await interaction.reply({ content: '⏳ Ta fiche client est en cours de création...', flags: 64 });
+      console.log(`📋 Création fiche pour ${data.username} | pack: ${data.pack}`);
+      try {
+        await creerFicheClient(interaction.guild, data);
+        console.log('✅ Fiche créée avec succès');
+      } catch(e) {
+        console.error('❌ Erreur creerFicheClient:', e);
+      }
       commandes.delete(cid);
       return;
     }
@@ -571,7 +583,7 @@ client.on('interactionCreate', async (interaction) => {
     console.error('Erreur interaction :', err);
     try {
       if (interaction.deferred || interaction.replied) return;
-      await interaction.reply({ content: '❌ Une erreur est survenue. Réessaie.', ephemeral: true });
+      await interaction.reply({ content: '❌ Une erreur est survenue. Réessaie.', flags: 64 });
     } catch {}
   }
 });
