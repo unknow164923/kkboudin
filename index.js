@@ -302,10 +302,7 @@ async function ouvrirModalFinal(interaction) {
       new TextInputBuilder().setCustomId('description')
         .setLabel('Décris en détail tout ce que tu veux')
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder(
-          'Ambiance générale, inspirations, références de serveurs que tu aimes, ' +
-          'fonctionnalités spéciales, public cible, ce que tu veux absolument avoir ou éviter...'
-        )
+        .setPlaceholder('Ambiance, inspirations, fonctionnalités, public cible, ce que tu veux avoir ou éviter...')
         .setRequired(true).setMaxLength(1000)
     ),
     new ActionRowBuilder().addComponents(
