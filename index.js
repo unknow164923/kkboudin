@@ -38,8 +38,14 @@ client.once('ready', () => {
 
 // ─── DÉTECTION NOUVEAU TICKET ────────────────────────────────────────────────
 client.on('channelCreate', async (channel) => {
-  if (channel.parentId !== CONFIG.TICKET_CATEGORY_ID) return;
+  console.log(`📢 Nouveau salon créé : "${channel.name}" | parentId: ${channel.parentId} | type: ${channel.type}`);
+  console.log(`🔍 TICKET_CATEGORY_ID configuré : ${CONFIG.TICKET_CATEGORY_ID}`);
+  if (channel.parentId !== CONFIG.TICKET_CATEGORY_ID) {
+    console.log(`❌ parentId ne correspond pas → ignoré`);
+    return;
+  }
   if (channel.type !== ChannelType.GuildText) return;
+  console.log(`✅ Ticket détecté ! Lancement du formulaire...`);
   await sleep(1500);
 
   const memberOw = channel.permissionOverwrites.cache.filter(
