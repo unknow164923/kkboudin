@@ -104,20 +104,14 @@ async function envoyerSelectPaiement(channel) {
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('💳 Mode de paiement')
-    .setDescription('> Quel mode de paiement souhaites-tu utiliser ?')
+    .setDescription('> Le paiement s\'effectue uniquement par **virement bancaire**.\n> Clique sur le bouton ci-dessous pour confirmer.')
     .setFooter({ text: 'Étape 2 — Paiement' });
 
   const row = new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId('sel:paiement')
-      .setPlaceholder('Choisis ton mode de paiement...')
-      .addOptions([
-        { label: 'PayPal',                  emoji: '💰', value: 'PayPal'           },
-        { label: 'Virement bancaire',        emoji: '🏦', value: 'Virement'         },
-        { label: 'Crypto (BTC / ETH / LTC)', emoji: '🪙', value: 'Crypto'           },
-        { label: 'Lydia / Sumeria',          emoji: '📱', value: 'Lydia/Sumeria'    },
-        { label: 'Autre',                    emoji: '❓', value: 'Autre'            },
-      ])
+    new ButtonBuilder()
+      .setCustomId('btn:paiement')
+      .setLabel('🏦 Confirmer — Virement bancaire')
+      .setStyle(ButtonStyle.Primary)
   );
   await channel.send({ embeds: [embed], components: [row] });
 }
@@ -347,10 +341,10 @@ client.on('interactionCreate', async (interaction) => {
       return;
     }
 
-    // ── SELECT PAIEMENT ────────────────────────────────────────────────────────
-    if (interaction.isStringSelectMenu() && interaction.customId === 'sel:paiement') {
+    // ── BOUTON PAIEMENT ────────────────────────────────────────────────────────
+    if (interaction.isButton() && interaction.customId === 'btn:paiement') {
       if (!data) return;
-      data.paiement = interaction.values[0];
+      data.paiement = 'Virement bancaire';
       await interaction.update({ components: [] });
       await ouvrirModalInfosGenerales(interaction);
       return;
