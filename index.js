@@ -98,9 +98,9 @@ async function envoyerSelectPack(channel) {
       .setCustomId('sel:pack')
       .setPlaceholder('Choisis ton pack...')
       .addOptions([
-        { label: '🥉 PACK BASIC — 5€',   description: 'Structure de base, livraison 24h',       value: 'basic'   },
-        { label: '🥈 PACK PRO — 15€',    description: 'Rôles, tickets, bot de bienvenue',        value: 'pro'     },
-        { label: '🥇 PACK PREMIUM — 30€',description: 'Design soigné, bots avancés, support 7j', value: 'premium' },
+        { label: '🥉 PACK BASIC — 10€',   description: 'Structure de base, livraison 24h',       value: 'basic'   },
+        { label: '🥈 PACK PRO — 25€',    description: 'Rôles, tickets, bot de bienvenue',        value: 'pro'     },
+        { label: '🥇 PACK PREMIUM — 50€',description: 'Design soigné, bots avancés, support 7j', value: 'premium' },
       ])
   );
   await channel.send({ embeds: [embed], components: [row] });
@@ -669,7 +669,7 @@ client.on('interactionCreate', async (interaction) => {
 
 async function creerFicheClient(guild, data) {
   const packEmojis = { basic: '🥉', pro: '🥈', premium: '🥇' };
-  const packPrix   = { basic: '5€', pro: '15€', premium: '30€' };
+  const packPrix   = { basic: '10€', pro: '25€', premium: '50€' };
   const packNom    = { basic: 'BASIC', pro: 'PRO', premium: 'PREMIUM' };
 
   const nomSalon = `fiche-${data.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'client'}`;
@@ -756,7 +756,7 @@ async function creerFicheClient(guild, data) {
     const commandesChannel = await client.channels.fetch(CONFIG.COMMANDES_ID).catch(() => null);
     if (commandesChannel) {
       const packEmojisLocal = { basic: '🥉', pro: '🥈', premium: '🥇' };
-      const packPrixLocal   = { basic: '5€', pro: '15€', premium: '30€' };
+      const packPrixLocal   = { basic: '10€', pro: '25€', premium: '50€' };
       await commandesChannel.send({
         content: `${packEmojisLocal[data.pack]} **Nouvelle commande** — ${packPrixLocal[data.pack]} | 👤 **${data.username}** | 📋 Fiche : <#${ficheChannel.id}> | 🎫 Ticket : <#${data.ticketChannelId}>`
       });
