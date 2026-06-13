@@ -87,9 +87,9 @@ async function envoyerSelectPack(channel) {
     .setTitle('🛒 Bienvenue — Choix du pack')
     .setDescription(
       '> Sélectionne le pack que tu souhaites commander :\n\n' +
-      '🥉 **BASIC — 5€**\nStructure de base · 5 catégories · 10 salons · Livraison 24h\n\n' +
-      '🥈 **PRO — 15€**\nTout le Basic + rôles · tickets · bot de bienvenue · 1 correction\n\n' +
-      '🥇 **PREMIUM — 30€**\nTout le Pro + design soigné · bots avancés · support 7j · rôle VIP'
+      '🥉 **BASIC — 10€**\nStructure de base · 5 catégories · 10 salons · Livraison 24h\n\n' +
+      '🥈 **PRO — 25€**\nTout le Basic + rôles · tickets · bot de bienvenue · 1 correction\n\n' +
+      '🥇 **PREMIUM — 50€**\nTout le Pro + design soigné · bots avancés · support 7j · rôle VIP'
     )
     .setFooter({ text: 'Étape 1 — Choix du pack' });
 
